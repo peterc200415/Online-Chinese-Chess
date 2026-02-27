@@ -39,7 +39,24 @@ const io = new Server(server, {
     cors: {
         origin: '*',
         methods: ['GET', 'POST']
+    },
+    pingTimeout: 60000,
+    pingInterval: 25000,
+    maxHttpBufferSize: 1e6,
+    transports: ['websocket', 'polling'],
+    perMessageDeflate: false
+});
+
+const MAX_CONNECTIONS = 100;
+let connectionCount = 0;
+
+io.use((socket, next) => {
+    if (connectionCount >= MAX_CONNECTIONS) {
+        return next(new Error('Server full'));
     }
+    connectionCount++;
+    socket.on('disconnect', () => connectionCount--);
+    next();
 });
 
 // Delegate socket events to roomHandler

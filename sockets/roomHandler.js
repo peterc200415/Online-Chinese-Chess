@@ -1,7 +1,30 @@
 const { randomUUID } = require('crypto');
 
-// Temporary in-memory state for active rooms instead of constantly hitting DB for moves
 const activeRooms = {};
+const ROOM_CLEANUP_DELAY = 5 * 60 * 1000;
+const MAX_ROOMS = 50;
+const MAX_MOVES_HISTORY = 500;
+
+function cleanupOldRooms() {
+    const now = Date.now();
+    for (const [roomId, room] of Object.entries(activeRooms)) {
+        if (room.status === 'done' || room.status === 'waiting') {
+            const lastActivity = room.lastActivity || 0;
+            if (now - lastActivity > ROOM_CLEANUP_DELAY && room.players.length === 0) {
+                delete activeRooms[roomId];
+                console.log(`Cleaned up room: ${roomId}`);
+            }
+        }
+    }
+    if (Object.keys(activeRooms).length > MAX_ROOMS) {
+        const sorted = Object.entries(activeRooms)
+            .filter(([, r]) => r.players.length === 0)
+            .sort((a, b) => (a[1].lastActivity || 0) - (b[1].lastActivity || 0));
+        const toDelete = sorted.slice(0, Object.keys(activeRooms).length - MAX_ROOMS);
+        toDelete.forEach(([id]) => delete activeRooms[id]);
+    }
+}
+setInterval(cleanupOldRooms, 60000);
 
 module.exports = (io, db) => {
     // Helper: build room list for clients
@@ -32,15 +55,21 @@ module.exports = (io, db) => {
         socket.on('join_room', ({ roomId, user }) => {
             socket.join(roomId);
             if (!activeRooms[roomId]) {
+                if (Object.keys(activeRooms).length >= MAX_ROOMS) {
+                    socket.emit('room_error', 'Server full, try again later');
+                    return;
+                }
                 activeRooms[roomId] = {
                     players: [],
                     spectators: [],
                     moves: [],
-                    status: 'waiting'
+                    status: 'waiting',
+                    lastActivity: Date.now()
                 };
             }
 
             const room = activeRooms[roomId];
+            room.lastActivity = Date.now();
             if (room.players.length < 2 && !room.players.find(p => p.id === user.id)) {
                 const color = room.players.length === 0 ? 'red' : 'black';
                 room.players.push({ ...user, color, socketId: socket.id });
@@ -67,7 +96,7 @@ module.exports = (io, db) => {
             if (!room.spectators.includes(socket.id)) {
                 room.spectators.push(socket.id);
             }
-            // Send current game state: replay all moves so spectator sees current board
+            room.lastActivity = Date.now();
             socket.emit('watch_start', {
                 players: room.players,
                 moves: room.moves,
@@ -80,7 +109,12 @@ module.exports = (io, db) => {
         socket.on('make_move', ({ roomId, move }) => {
             socket.to(roomId).emit('move_made', move);
             if (activeRooms[roomId]) {
-                activeRooms[roomId].moves.push(move);
+                const room = activeRooms[roomId];
+                room.moves.push(move);
+                room.lastActivity = Date.now();
+                if (room.moves.length > MAX_MOVES_HISTORY) {
+                    room.moves = room.moves.slice(-MAX_MOVES_HISTORY);
+                }
             }
         });
 
@@ -89,6 +123,7 @@ module.exports = (io, db) => {
             const room = activeRooms[roomId];
             if (room && room.status === 'playing') {
                 room.status = 'done';
+                room.lastActivity = Date.now();
                 const gameId = randomUUID();
                 const movesJson = JSON.stringify(room.moves);
 
@@ -108,6 +143,7 @@ module.exports = (io, db) => {
             const room = activeRooms[roomId];
             if (room) {
                 room.players = room.players.filter(p => p.socketId !== socket.id);
+                room.lastActivity = Date.now();
                 io.to(roomId).emit('room_update', room);
                 if (room.players.length === 0) {
                     delete activeRooms[roomId];

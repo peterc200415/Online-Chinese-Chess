@@ -22,9 +22,32 @@
       <div v-else class="room-box flex-col">
         <h3>{{ t('welcome') }}, {{ user.nickname }}!</h3>
         <input v-model="roomIdInput" :placeholder="t('roomId')" />
-        <button @click="joinRoom">{{ t('joinRoom') }}</button>
-        <button @click="createRoom" style="background: #8b5cf6">{{ t('newRoom') }}</button>
-        <button @click="startSP" style="background: #10b981; margin-top:20px">{{ t('playAI') }}</button>
+        <div style="display:flex; gap: 10px">
+          <button @click="joinRoom" style="flex:1">{{ t('joinRoom') }}</button>
+          <button @click="createRoom" style="flex:1; background: #8b5cf6">{{ t('newRoom') }}</button>
+        </div>
+
+        <!-- Room List -->
+        <div v-if="rooms.length > 0" class="room-list">
+          <h4 style="margin: 12px 0 8px; color: #94a3b8">{{ t('availableRooms') }}</h4>
+          <div v-for="room in rooms" :key="room.id" class="room-card">
+            <div class="room-card-info">
+              <span class="room-card-id">{{ room.id }}</span>
+              <span :class="['room-status', room.status]">{{ room.status === 'waiting' ? t('waiting') : t('playing') }}</span>
+            </div>
+            <div class="room-card-players">
+              <span v-for="p in room.players" :key="p.nickname" :style="{color: p.color === 'red' ? '#ef4444' : '#94a3b8'}">{{ p.nickname }}</span>
+              <span v-if="room.spectatorCount > 0" style="color: #64748b">👁 {{ room.spectatorCount }}</span>
+            </div>
+            <div style="display:flex; gap: 8px; margin-top: 8px">
+              <button v-if="room.playerCount < 2" @click="joinRoomById(room.id)" style="flex:1; font-size:13px; padding:6px">{{ t('joinRoom') }}</button>
+              <button @click="watchRoom(room.id)" style="flex:1; font-size:13px; padding:6px; background: #6366f1">👁 {{ t('watch') }}</button>
+            </div>
+          </div>
+        </div>
+        <div v-else style="color: #475569; text-align: center; margin: 12px 0; font-size: 14px">{{ t('noRooms') }}</div>
+
+        <button @click="startSP" style="background: #10b981; margin-top:8px">{{ t('playAI') }}</button>
       </div>
     </div>
 
@@ -39,8 +62,11 @@
 
     <div v-else-if="view === 'game'" class="game-view flex-col" style="align-items: center">
       <div class="header glass-panel" style="width: 100%; text-align: center">
-        <h2>{{ isSinglePlayer ? t('singlePlayer') : t('room') + ': ' + currentRoomId }}</h2>
-        <div>{{ t('color') }}: <span :style="{color: myColor === 'red' ? '#ef4444' : '#94a3b8'}">{{ colorName(myColor) }}</span> | {{ t('turnLabel') }}: <span :style="{color: turn === 'red' ? '#ef4444' : '#94a3b8'}">{{ colorName(turn) }}</span></div>
+        <h2 v-if="isSpectator">👁 {{ t('spectating') }} — {{ currentRoomId }}</h2>
+        <h2 v-else>{{ isSinglePlayer ? t('singlePlayer') : t('room') + ': ' + currentRoomId }}</h2>
+        <div>{{ t('turnLabel') }}: <span :style="{color: turn === 'red' ? '#ef4444' : '#94a3b8'}">{{ colorName(turn) }}</span></div>
+        <div v-if="!isSpectator">{{ t('color') }}: <span :style="{color: myColor === 'red' ? '#ef4444' : '#94a3b8'}">{{ colorName(myColor) }}</span></div>
+        <div v-if="isSpectator" style="color: #6366f1; margin-top: 4px">{{ t('spectatorHint') }}</div>
         <div v-if="aiThinking" style="color: #fbbf24; margin-top: 6px">🤔 {{ t('aiThinking') }}</div>
         <button @click="leave" style="margin-top: 10px">{{ t('leaveGame') }}</button>
       </div>
@@ -111,6 +137,14 @@ const i18n = {
     gameSaved: '對局結束並已儲存！',
     needLogin: '請先登入或註冊帳號！',
     enterRoomId: '請輸入房間 ID！',
+    availableRooms: '可用房間',
+    waiting: '等待中',
+    playing: '對戰中',
+    joinable: '可加入',
+    noRooms: '目前沒有房間，建立一個吧！',
+    watch: '觀戰',
+    spectating: '觀戰中',
+    spectatorHint: '你正在觀看此對局，無法操作棋子',
   },
   en: {
     title: 'Chinese Chess Online',
@@ -146,6 +180,14 @@ const i18n = {
     gameSaved: 'Game ended and saved!',
     needLogin: 'Please login or register first!',
     enterRoomId: 'Please enter a Room ID!',
+    availableRooms: 'Available Rooms',
+    waiting: 'Waiting',
+    playing: 'Playing',
+    joinable: 'Open',
+    noRooms: 'No rooms yet. Create one!',
+    watch: 'Watch',
+    spectating: 'Spectating',
+    spectatorHint: 'You are watching this game. You cannot move pieces.',
   }
 };
 
@@ -154,7 +196,10 @@ function colorName(c) { return c === 'red' ? t('red') : t('black'); }
 function toggleLang() { lang.value = lang.value === 'zh' ? 'en' : 'zh'; }
 
 // ==================== State ====================
-const API = `http://${window.location.hostname}:3000`;
+// If accessed via domain (nginx proxy), use same origin; otherwise use port 3000
+const isProxied = !window.location.port || window.location.port === '80' || window.location.port === '443';
+const API = isProxied ? '' : `http://${window.location.hostname}:3000`;
+const SOCKET_URL = isProxied ? window.location.origin : `http://${window.location.hostname}:3000`;
 let socket;
 
 const view = ref('lobby');
@@ -172,6 +217,8 @@ const currentRoomId = ref('');
 const winner = ref(null);
 const winMessage = ref('');
 const aiThinking = ref(false);
+const rooms = ref([]);
+const isSpectator = ref(false);
 
 function closeVictory() {
   winner.value = null;
@@ -214,7 +261,7 @@ async function register() {
 
 function initSocket() {
   if (socket) return; // prevent double init
-  socket = io(API);
+  socket = io(SOCKET_URL);
   
   socket.on('connect', () => {
     console.log('Socket connected:', socket.id);
@@ -245,6 +292,22 @@ function initSocket() {
     alert(t('gameSaved'));
     view.value = 'lobby';
   });
+
+  socket.on('room_list', (list) => {
+    rooms.value = list;
+  });
+
+  socket.on('watch_start', (data) => {
+    resetBoard();
+    // Replay all moves to get current board state
+    for (const move of data.moves) {
+      board.value = applyMove(board.value, move);
+    }
+    turn.value = data.moves.length % 2 === 0 ? 'red' : 'black';
+    isSpectator.value = true;
+    myColor.value = 'red'; // doesn't matter for spectator, just for display
+    view.value = 'game';
+  });
 }
 
 function createRoom() {
@@ -259,10 +322,14 @@ function createRoom() {
 function joinRoom() {
   if (!user.value) { alert(t('needLogin')); return; }
   if (!roomIdInput.value.trim()) { alert(t('enterRoomId')); return; }
-  currentRoomId.value = roomIdInput.value.trim();
+  joinRoomById(roomIdInput.value.trim());
+}
+
+function joinRoomById(id) {
+  if (!user.value) { alert(t('needLogin')); return; }
+  currentRoomId.value = id;
   if (!socket) initSocket();
-  socket.emit('join_room', { roomId: currentRoomId.value, user: user.value });
-  // game_start event will switch to game view when 2nd player joins
+  socket.emit('join_room', { roomId: id, user: user.value });
   view.value = 'waiting';
 }
 
@@ -274,6 +341,14 @@ function leaveWaiting() {
   view.value = 'lobby';
 }
 
+function watchRoom(roomId) {
+  currentRoomId.value = roomId;
+  isSinglePlayer.value = false;
+  isSpectator.value = true;
+  if (!socket) initSocket();
+  socket.emit('watch_room', { roomId });
+}
+
 function startSP() {
   isSinglePlayer.value = true;
   currentRoomId.value = '';
@@ -283,6 +358,7 @@ function startSP() {
 }
 
 async function handleMove(move) {
+  if (isSpectator.value) return; // spectators can't move
   if (!isValidMove(board.value, move.start, move.end, myColor.value)) return;
   
   const targetPiece = board.value[move.end[0]][move.end[1]];
@@ -322,6 +398,7 @@ async function handleMove(move) {
 }
 
 function leave() {
+  isSpectator.value = false;
   if (isSinglePlayer.value) {
     view.value = 'lobby';
   } else {

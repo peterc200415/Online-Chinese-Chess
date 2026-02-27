@@ -117,6 +117,64 @@ input {
   gap: 10px;
 }
 
+/* Room List */
+.room-list {
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.room-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.room-card:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(139, 92, 246, 0.5);
+  transform: translateY(-1px);
+}
+
+.room-card-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.room-card-id {
+  font-weight: 600;
+  font-size: 14px;
+  color: #e2e8f0;
+}
+
+.room-status {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.room-status.waiting {
+  background: rgba(74, 222, 128, 0.15);
+  color: #4ade80;
+}
+
+.room-status.playing {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+}
+
+.room-card-players {
+  display: flex;
+  gap: 8px;
+  font-size: 13px;
+}
+
 /* Victory Overlay */
 .victory-overlay {
   position: fixed;

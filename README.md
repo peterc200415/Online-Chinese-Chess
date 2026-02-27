@@ -1,15 +1,17 @@
 # ♟ Online Chinese Chess Platform (象棋對戰平台)
 
-A web-based multiplayer Chinese Chess (Xiangqi) platform featuring **Real-Time PvP** matches, a hybrid **Minimax + LLM AI** engine, and a premium SVG-rendered game board with **Chinese/English i18n** support.
+A web-based multiplayer Chinese Chess (Xiangqi) platform featuring **Real-Time PvP** matches, **Spectator Mode**, a hybrid **Minimax + LLM AI** engine, and a premium SVG-rendered game board with **Chinese/English i18n** support.
 
 ---
 
 ## Features
 
 ### 🎮 Game Modes
-- **Single Player vs AI** — Hybrid AI engine: **Minimax (depth 4 + quiescence search)** with optional **Ollama LLM** strategic advisor
-- **1v1 Real-Time Multiplayer** — Create rooms, share Room IDs, and play against friends over WebSocket
-- **Waiting Room** — Visual lobby with spinner animation while waiting for opponent to join
+| Mode | Description |
+|------|-------------|
+| **Single Player vs AI** | Hybrid engine: Minimax (depth 4 + quiescence) + optional Ollama LLM advisor |
+| **1v1 Real-Time Multiplayer** | Create rooms, share Room IDs, play against friends over WebSocket |
+| **👁 Spectator Mode** | Watch any ongoing game in real-time without participating |
 
 ### 🧠 AI Engine (Hybrid Architecture)
 | Layer | Role | Details |
@@ -23,14 +25,17 @@ A web-based multiplayer Chinese Chess (Xiangqi) platform featuring **Real-Time P
 - Per-piece move generation: 車(Rook), 馬(Knight), 炮(Cannon), 象(Bishop), 士(Advisor), 將/帥(King), 兵/卒(Pawn)
 - Blocking rules: Horse leg (卡馬腿), Elephant eye (塞象眼), Cannon platform (炮打隔山)
 - Palace restrictions, river crossing, Flying General (飛將)
-- **Win detection** on King capture with animated victory overlay
+- Win detection on King capture with animated victory overlay
 
 ### 🌐 UI & UX
 - **i18n**: Full Chinese ↔ English toggle (floating button, instant switch)
-- **Victory Overlay**: Glassmorphism modal with 🏆 animation (replaces browser alerts)
-- **AI Thinking Indicator**: `🤔 AI 思考中...` shown during AI computation
-- **Color-coded status bar**: Red/Black turn indicators with Chinese labels
-- **SVG Board**: Wood-grain background, white grid lines, traditional piece names
+- **Room List**: Browse all active rooms with status, players, and spectator count
+- **Spectator Mode**: Watch games live with real-time board sync + move replay
+- **Victory Overlay**: Glassmorphism modal with 🏆 animation
+- **AI Thinking Indicator**: `🤔 AI 思考中...` during AI computation
+- **Waiting Room**: Spinner + Room ID display while waiting for opponent
+- **Responsive Design**: Mobile-first layout, auto-scaling SVG board
+- **SVG Board**: Wood-grain background, white grid, traditional piece names
 
 ---
 
@@ -58,12 +63,13 @@ chinese-chcess/
 │   ├── auth.js                # Login & register API
 │   └── games.js               # Game history API
 ├── sockets/
-│   └── roomHandler.js         # Real-time multiplayer room logic
+│   └── roomHandler.js         # Room management + spectator logic
 └── frontend/
+    ├── vite.config.js         # Dev server proxy (/api → 3000)
     └── src/
-        ├── App.vue            # Main app (lobby, waiting room, game, i18n)
+        ├── App.vue            # Main app (lobby, rooms, spectator, i18n)
         ├── assets/
-        │   └── style.css      # Global styles + victory overlay + spinner
+        │   └── style.css      # Global styles + responsive + animations
         ├── components/
         │   └── ChessBoard.vue # SVG board renderer
         └── engine/
@@ -93,20 +99,25 @@ cd frontend
 npm install
 npm run dev
 ```
-Frontend runs on `http://localhost:5173`.
+Frontend runs on `http://localhost:5173`. API requests are auto-proxied to port 3000.
 
-### 3. LAN Access
-Other devices on the same network can connect via `http://<your-ip>:5173`.  
-The `--host` flag is already configured in `package.json`.
+### 3. LAN / Domain Access
+- **LAN**: Other devices connect via `http://<your-ip>:5173`
+- **Domain**: Configure nginx to reverse proxy to port 5173 (Vite auto-proxies `/api` and `/socket.io` to backend)
 
 ---
 
 ## Multiplayer Guide
-1. Open the app in **two browser windows** (use Incognito for the second)
-2. **Register & Login** in both windows
-3. Window A: Click **New Room** → enters waiting room → copy the Room ID
+1. Open the app in **two browser windows**
+2. **Register & Login** in both
+3. Window A: Click **New Room** → enters waiting room → copy Room ID
 4. Window B: Paste Room ID → click **Join Room**
-5. Game starts automatically when both players are in!
+5. Game starts automatically!
+
+## Spectator Guide
+1. **Login** and check the room list in the lobby
+2. Click **👁 Watch** on any room card
+3. The current board state is replayed instantly — watch moves in real-time!
 
 ---
 

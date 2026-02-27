@@ -29,7 +29,9 @@ export async function getOllamaMove(board, color) {
             `Example: 0,1,2,2\nDo not explain.`;
 
         console.log("Asking Ollama for strategic advice...");
-        const res = await fetch(`http://${window.location.hostname}:3000/api/ai_move`, {
+        const isProxied = !window.location.port || window.location.port === '80' || window.location.port === '443';
+        const apiBase = isProxied ? '' : `http://${window.location.hostname}:3000`;
+        const res = await fetch(`${apiBase}/api/ai_move`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

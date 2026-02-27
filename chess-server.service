@@ -1,0 +1,14 @@
+[Unit]
+Description=Chinese Chess Server
+After=network.target
+
+[Service]
+Type=simple
+User=peterc20
+WorkingDirectory=/home/peterc20/opencode/chinese-chcess
+ExecStart=/home/peterc20/.nvm/versions/node/v24.13.1/bin/node server.js
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

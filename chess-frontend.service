@@ -1,0 +1,14 @@
+[Unit]
+Description=Chinese Chess Frontend
+After=network.target
+
+[Service]
+Type=simple
+User=peterc20
+WorkingDirectory=/home/peterc20/opencode/chinese-chcess/frontend
+ExecStart=/home/peterc20/.nvm/versions/node/v24.13.1/bin/npm run dev
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

@@ -191,6 +191,29 @@ export function applyMove(board, move) {
     return newBoard;
 }
 
+export function isKingInCheck(board, color) {
+    const prefix = color[0];
+    let kingPos = null;
+    
+    for (let r = 0; r < 10; r++) {
+        for (let c = 0; c < 9; c++) {
+            const p = board[r][c];
+            if (p && p[0] === prefix && p[1] === 'K') {
+                kingPos = [r, c];
+                break;
+            }
+        }
+        if (kingPos) break;
+    }
+    
+    if (!kingPos) return false;
+    
+    const oppPrefix = prefix === 'r' ? 'b' : 'r';
+    const oppMoves = generateAllMoves(board, oppPrefix === 'r' ? 'red' : 'black');
+    
+    return oppMoves.some(m => m.end[0] === kingPos[0] && m.end[1] === kingPos[1]);
+}
+
 // --- Evaluation ---
 const PIECE_VALUES = { 'K': 10000, 'R': 1000, 'C': 500, 'N': 450, 'B': 200, 'A': 200, 'P': 100 };
 

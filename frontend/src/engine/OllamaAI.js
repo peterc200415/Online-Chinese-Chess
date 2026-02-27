@@ -1,13 +1,11 @@
 import { generateAllMoves, applyMove } from './GameLogic.js';
-import { getBestMove } from './MinimaxAI.js';
+import { getBestMove, getBestMoveQuick } from './MinimaxAI.js';
 
 export async function getOllamaMove(board, color) {
-    // Step 1: Always generate moves and get Minimax's best recommendation
     const moves = generateAllMoves(board, color);
     if (moves.length === 0) return null;
 
-    // Step 2: Use Minimax as the primary brain (depth 4 for stronger play)
-    const minimaxMove = getBestMove(board, 4, color);
+    const minimaxMove = getBestMove(board, 5, color);
 
     // Step 3: Try Ollama as an advisor (optional, may fail)
     try {

@@ -2,7 +2,17 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
-const db = require('./database'); // Initialize DB
+const db = require('./database');
+
+process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception:', err);
+    console.log('Restarting server in 3 seconds...');
+    setTimeout(() => process.exit(1), 3000);
+});
+
+process.on('unhandledRejection', (reason) => {
+    console.error('Unhandled Rejection:', reason);
+});
 
 const app = express();
 const server = http.createServer(app);
@@ -66,3 +76,7 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
+
+setInterval(() => {
+    console.log(`[Health] Server OK, connections: ${connectionCount}`);
+}, 60000);

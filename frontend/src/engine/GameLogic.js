@@ -154,34 +154,6 @@ function pieceMoves(board, r, c) {
     return moves;
 }
 
-export function isValidMove(board, start, end, turn) {
-    const [sr, sc] = start;
-    const [er, ec] = end;
-    if (!inBounds(sr, sc) || !inBounds(er, ec)) return false;
-    if (sr === er && sc === ec) return false;
-    const piece = board[sr][sc];
-    if (!piece || piece[0] !== (turn === 'red' ? 'r' : 'b')) return false;
-    const target = board[er][ec];
-    if (target && target[0] === piece[0]) return false;
-
-    // Check if [er, ec] is in the piece's generated moves
-    const validMoves = pieceMoves(board, sr, sc);
-    return validMoves.some(m => m.end[0] === er && m.end[1] === ec);
-}
-
-export function generateAllMoves(board, color) {
-    const prefix = color[0];
-    let moves = [];
-    for (let r = 0; r < 10; r++) {
-        for (let c = 0; c < 9; c++) {
-            if (board[r][c] && board[r][c][0] === prefix) {
-                const pm = pieceMoves(board, r, c);
-                for (const m of pm) moves.push(m);
-            }
-        }
-    }
-    return moves;
-}
 
 export function applyMove(board, move) {
     const newBoard = board.map(row => [...row]);
@@ -212,6 +184,41 @@ export function isKingInCheck(board, color) {
     const oppMoves = generateAllMoves(board, oppPrefix === 'r' ? 'red' : 'black');
     
     return oppMoves.some(m => m.end[0] === kingPos[0] && m.end[1] === kingPos[1]);
+}
+
+export function hasLegalMoves(board, color) {
+    const moves = generateAllMoves(board, color);
+    for (const move of moves) {
+        const tempBoard = applyMove(board, move);
+        if (!isKingInCheck(tempBoard, color)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+export function generateAllMoves(board, color) {
+    const prefix = color[0];
+    let moves = [];
+    for (let r = 0; r < 10; r++) {
+        for (let c = 0; c < 9; c++) {
+            if (board[r][c] && board[r][c][0] === prefix) {
+                const pm = pieceMoves(board, r, c);
+                for (const m of pm) moves.push(m);
+            }
+        }
+    }
+    return moves;
+}
+
+export function getGameStatus(board, turn) {
+    const inCheck = isKingInCheck(board, turn);
+    const hasMoves = hasLegalMoves(board, turn);
+    
+    if (!hasMoves) {
+        return inCheck ? 'checkmate' : 'stalemate';
+    }
+    return inCheck ? 'check' : 'playing';
 }
 
 // --- Evaluation ---
@@ -270,8 +277,33 @@ const PST_CANNON = [
     [0, 0, 2, 6, 6, 6, 2, 0, 0],
 ];
 
+const PST_BISHOP = [
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [4, 0, 4, 0, 6, 0, 4, 0, 4],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+];
+
+const PST_ADVISOR = [
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 2, 0, 4, 0, 2, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 2, 0, 4, 0, 2, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+];
+
 function getPST(type, color, r, c) {
-    // For black, mirror row (9 - r) for pawn
     if (type === 'P') {
         const row = color === 'r' ? r : (9 - r);
         return PST_PAWN_RED[row][c];
@@ -279,7 +311,34 @@ function getPST(type, color, r, c) {
     if (type === 'N') return PST_KNIGHT[r][c];
     if (type === 'R') return PST_ROOK[r][c];
     if (type === 'C') return PST_CANNON[r][c];
+    if (type === 'B') {
+        const row = color === 'r' ? r : (9 - r);
+        return PST_BISHOP[row][c];
+    }
+    if (type === 'A') {
+        const row = color === 'r' ? r : (9 - r);
+        return PST_ADVISOR[row][c];
+    }
     return 0;
+}
+
+export function isValidMove(board, start, end, turn) {
+    const [sr, sc] = start;
+    const [er, ec] = end;
+    if (!inBounds(sr, sc) || !inBounds(er, ec)) return false;
+    if (sr === er && sc === ec) return false;
+    const piece = board[sr][sc];
+    if (!piece || piece[0] !== (turn === 'red' ? 'r' : 'b')) return false;
+    const target = board[er][ec];
+    if (target && target[0] === piece[0]) return false;
+
+    const validMoves = pieceMoves(board, sr, sc);
+    if (!validMoves.some(m => m.end[0] === er && m.end[1] === ec)) return false;
+
+    const tempBoard = applyMove(board, { start, end });
+    if (isKingInCheck(tempBoard, turn)) return false;
+
+    return true;
 }
 
 export function evaluateBoard(board, color) {

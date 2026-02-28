@@ -69,12 +69,19 @@
         <div v-if="isSpectator" style="color: #6366f1; margin-top: 4px">{{ t('spectatorHint') }}</div>
         <div v-if="aiThinking" style="color: #fbbf24; margin-top: 6px">🤔 {{ t('aiThinking') }}</div>
         <button @click="leave" style="margin-top: 10px">{{ t('leaveGame') }}</button>
+        
+        <div style="margin-top: 12px; display: flex; align-items: center; gap: 10px;">
+          <label style="color: #94a3b8; font-size: 14px;">棋盤大小:</label>
+          <input type="range" v-model="boardSize" min="35" max="70" step="5" style="width: 120px;">
+          <span style="color: #fbbf24; font-size: 14px;">{{ boardSize }}</span>
+        </div>
       </div>
       
       <ChessBoard 
         :board="board"
         :turn="turn"
         :myColor="myColor"
+        :size="boardSize"
         @move="handleMove"
         style="margin-top: 20px"
       />
@@ -96,7 +103,7 @@
 import { ref } from 'vue';
 import { io } from 'socket.io-client';
 import ChessBoard from './components/ChessBoard.vue';
-import { STARTING_BOARD, applyMove, isValidMove } from './engine/GameLogic.js';
+import { STARTING_BOARD, applyMove, isValidMove, getGameStatus } from './engine/GameLogic.js';
 import { getOllamaMove } from './engine/OllamaAI.js';
 
 // ==================== i18n ====================
@@ -133,6 +140,9 @@ const i18n = {
     winCapture: (c) => `${c}吃掉了對方的將帥，獲得勝利！`,
     aiWinCapture: (c) => `AI（${c}）吃掉了你的將帥！`,
     aiNoMoves: 'AI 已無棋可走，你獲得勝利！',
+    checkmateWin: '對手被將死，你獲得勝利！',
+    stalemate: '困斃！雙方平手！',
+    aiCheckmateWin: 'AI 將死你，你输了！',
     registerSuccess: '註冊成功！請登入。',
     gameSaved: '對局結束並已儲存！',
     needLogin: '請先登入或註冊帳號！',
@@ -176,6 +186,9 @@ const i18n = {
     winCapture: (c) => `${c} captured the General and wins!`,
     aiWinCapture: (c) => `AI (${c}) captured your General!`,
     aiNoMoves: 'AI has no moves left. You win!',
+    checkmateWin: 'Checkmate! You win!',
+    stalemate: 'Stalemate! Draw!',
+    aiCheckmateWin: 'Checkmate! AI wins!',
     registerSuccess: 'Registered! Please login.',
     gameSaved: 'Game ended and saved!',
     needLogin: 'Please login or register first!',
@@ -219,6 +232,7 @@ const winMessage = ref('');
 const aiThinking = ref(false);
 const rooms = ref([]);
 const isSpectator = ref(false);
+const boardSize = ref(50);
 
 function closeVictory() {
   winner.value = null;
@@ -358,7 +372,7 @@ function startSP() {
 }
 
 async function handleMove(move) {
-  if (isSpectator.value) return; // spectators can't move
+  if (isSpectator.value) return;
   if (!isValidMove(board.value, move.start, move.end, myColor.value)) return;
   
   const targetPiece = board.value[move.end[0]][move.end[1]];
@@ -370,7 +384,20 @@ async function handleMove(move) {
     return;
   }
 
-  turn.value = turn.value === 'red' ? 'black' : 'red';
+  const nextTurn = turn.value === 'red' ? 'black' : 'red';
+  const status = getGameStatus(board.value, nextTurn);
+  
+  if (status === 'checkmate') {
+    winner.value = myColor.value;
+    winMessage.value = t('checkmateWin');
+    return;
+  } else if (status === 'stalemate') {
+    winner.value = 'draw';
+    winMessage.value = t('stalemate');
+    return;
+  }
+  
+  turn.value = nextTurn;
   
   if (isSinglePlayer.value) {
     aiThinking.value = true;
@@ -386,6 +413,18 @@ async function handleMove(move) {
           winMessage.value = t('aiWinCapture')(colorName(aiColor));
           return;
         }
+        
+        const playerStatus = getGameStatus(board.value, myColor.value);
+        if (playerStatus === 'checkmate') {
+          winner.value = aiColor;
+          winMessage.value = t('aiCheckmateWin');
+          return;
+        } else if (playerStatus === 'stalemate') {
+          winner.value = 'draw';
+          winMessage.value = t('stalemate');
+          return;
+        }
+        
         turn.value = myColor.value;
       } else {
         winner.value = myColor.value;

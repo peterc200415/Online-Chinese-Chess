@@ -3,51 +3,116 @@
     <!-- Language Toggle (always visible) -->
     <button class="lang-toggle" @click="toggleLang">{{ lang === 'zh' ? 'EN' : '中' }}</button>
 
-    <div v-if="view === 'lobby'" class="glass-panel lobby">
-      <h1>♟ {{ t('title') }}</h1>
+    <div v-if="view === 'lobby'" class="lobby-container">
+      <!-- Logo/Title Section -->
+      <div class="lobby-header">
+        <div class="logo">♟</div>
+        <h1 class="title">{{ t('title') }}</h1>
+        <p class="subtitle">線上象棋對戰平台</p>
+      </div>
       
-      <div v-if="!user" class="auth-box flex-col">
-        <h3>{{ t('loginOrRegister') }}</h3>
-        <input v-model="email" :placeholder="t('email')" />
-        <input v-model="password" type="password" :placeholder="t('password')" />
-        <input v-model="nickname" :placeholder="t('nickname')" />
-        <div style="display:flex; gap: 10px">
-          <button @click="login">{{ t('login') }}</button>
-          <button @click="register">{{ t('register') }}</button>
+      <div v-if="!user" class="auth-card glass-panel">
+        <div class="auth-header">
+          <span class="auth-icon">👤</span>
+          <h2>{{ t('loginOrRegister') }}</h2>
         </div>
-        <hr style="width:100%; border-color: rgba(255,255,255,0.1)" />
-        <button @click="startSP" style="background: #10b981">{{ t('playAI') }}</button>
+        
+        <div class="input-group">
+          <input v-model="email" :placeholder="t('email')" class="modern-input" />
+          <input v-model="password" type="password" :placeholder="t('password')" class="modern-input" />
+          <input v-model="nickname" :placeholder="t('nickname')" class="modern-input" />
+        </div>
+        
+        <div class="auth-buttons">
+          <button @click="login" class="btn-primary">
+            <span>🔑</span> {{ t('login') }}
+          </button>
+          <button @click="register" class="btn-secondary">
+            <span>✏️</span> {{ t('register') }}
+          </button>
+        </div>
+        
+        <div class="divider">
+          <span>OR</span>
+        </div>
+        
+        <button @click="startSP" class="btn-ai">
+          <span>🤖</span> {{ t('playAI') }}
+          <span class="btn-badge">單機</span>
+        </button>
       </div>
 
-      <div v-else class="room-box flex-col">
-        <h3>{{ t('welcome') }}, {{ user.nickname }}!</h3>
-        <input v-model="roomIdInput" :placeholder="t('roomId')" />
-        <div style="display:flex; gap: 10px">
-          <button @click="joinRoom" style="flex:1">{{ t('joinRoom') }}</button>
-          <button @click="createRoom" style="flex:1; background: #8b5cf6">{{ t('newRoom') }}</button>
+      <div v-else class="room-card glass-panel">
+        <!-- User Info -->
+        <div class="user-info">
+          <div class="avatar">👤</div>
+          <div class="user-details">
+            <span class="welcome-text">{{ t('welcome') }}</span>
+            <span class="nickname">{{ user.nickname }}</span>
+          </div>
+          <button @click="user = null" class="logout-btn">登出</button>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+          <button @click="startSP" class="action-btn ai-btn">
+            <span class="action-icon">🤖</span>
+            <span class="action-text">{{ t('playAI') }}</span>
+          </button>
+        </div>
+        
+        <!-- Room Controls -->
+        <div class="room-controls">
+          <input v-model="roomIdInput" :placeholder="t('roomId')" class="modern-input room-input" />
+          <div class="room-buttons">
+            <button @click="joinRoom" class="btn-primary">
+              <span>🚪</span> {{ t('joinRoom') }}
+            </button>
+            <button @click="createRoom" class="btn-purple">
+              <span>➕</span> {{ t('newRoom') }}
+            </button>
+          </div>
         </div>
 
         <!-- Room List -->
-        <div v-if="rooms.length > 0" class="room-list">
-          <h4 style="margin: 12px 0 8px; color: #94a3b8">{{ t('availableRooms') }}</h4>
-          <div v-for="room in rooms" :key="room.id" class="room-card">
-            <div class="room-card-info">
-              <span class="room-card-id">{{ room.id }}</span>
-              <span :class="['room-status', room.status]">{{ room.status === 'waiting' ? t('waiting') : t('playing') }}</span>
-            </div>
-            <div class="room-card-players">
-              <span v-for="p in room.players" :key="p.nickname" :style="{color: p.color === 'red' ? '#ef4444' : '#94a3b8'}">{{ p.nickname }}</span>
-              <span v-if="room.spectatorCount > 0" style="color: #64748b">👁 {{ room.spectatorCount }}</span>
-            </div>
-            <div style="display:flex; gap: 8px; margin-top: 8px">
-              <button v-if="room.playerCount < 2" @click="joinRoomById(room.id)" style="flex:1; font-size:13px; padding:6px">{{ t('joinRoom') }}</button>
-              <button @click="watchRoom(room.id)" style="flex:1; font-size:13px; padding:6px; background: #6366f1">👁 {{ t('watch') }}</button>
+        <div class="room-list-section">
+          <h4 class="section-title">
+            <span>🎮</span> {{ t('availableRooms') }}
+            <span class="room-count">{{ rooms.length }}</span>
+          </h4>
+          
+          <div v-if="rooms.length > 0" class="room-grid">
+            <div v-for="room in rooms" :key="room.id" class="room-item">
+              <div class="room-header">
+                <span class="room-id">{{ room.id.slice(0, 8) }}</span>
+                <span :class="['status-badge', room.status]">
+                  {{ room.status === 'waiting' ? '⏳ 等待中' : '♟ 對戰中' }}
+                </span>
+              </div>
+              <div class="room-players">
+                <div v-for="p in room.players" :key="p.nickname" class="player-chip" :class="p.color">
+                  <span class="player-color-dot"></span>
+                  {{ p.nickname }}
+                </div>
+                <div v-if="room.playerCount < 2" class="player-chip empty">
+                  待加入
+                </div>
+              </div>
+              <div class="room-actions">
+                <button v-if="room.playerCount < 2" @click="joinRoomById(room.id)" class="join-btn">
+                  加入
+                </button>
+                <button @click="watchRoom(room.id)" class="watch-btn">
+                  👁 觀戰
+                </button>
+              </div>
             </div>
           </div>
+          <div v-else class="empty-rooms">
+            <span class="empty-icon">🎴</span>
+            <span>{{ t('noRooms') }}</span>
+          </div>
         </div>
-        <div v-else style="color: #475569; text-align: center; margin: 12px 0; font-size: 14px">{{ t('noRooms') }}</div>
-
-        <button @click="startSP" style="background: #10b981; margin-top:8px">{{ t('playAI') }}</button>
       </div>
     </div>
 
@@ -61,19 +126,50 @@
     </div>
 
     <div v-else-if="view === 'game'" class="game-view flex-col" style="align-items: center">
-      <div class="header glass-panel" style="width: 100%; text-align: center">
-        <h2 v-if="isSpectator">👁 {{ t('spectating') }} — {{ currentRoomId }}</h2>
-        <h2 v-else>{{ isSinglePlayer ? t('singlePlayer') : t('room') + ': ' + currentRoomId }}</h2>
-        <div>{{ t('turnLabel') }}: <span :style="{color: turn === 'red' ? '#ef4444' : '#94a3b8'}">{{ colorName(turn) }}</span></div>
-        <div v-if="!isSpectator">{{ t('color') }}: <span :style="{color: myColor === 'red' ? '#ef4444' : '#94a3b8'}">{{ colorName(myColor) }}</span></div>
-        <div v-if="isSpectator" style="color: #6366f1; margin-top: 4px">{{ t('spectatorHint') }}</div>
-        <div v-if="aiThinking" style="color: #fbbf24; margin-top: 6px">🤔 {{ t('aiThinking') }}</div>
-        <button @click="leave" style="margin-top: 10px">{{ t('leaveGame') }}</button>
+      <!-- 遊戲資訊欄 -->
+      <div class="game-header glass-panel">
+        <div class="game-info-row">
+          <!-- 房間/模式資訊 -->
+          <div class="info-block mode-info">
+            <span class="info-icon">🎮</span>
+            <span class="info-label">{{ isSinglePlayer ? '單機對戰' : '多人房間' }}</span>
+            <span v-if="!isSinglePlayer" class="room-id">{{ currentRoomId }}</span>
+          </div>
+          
+          <!-- 回合指示 -->
+          <div class="info-block turn-indicator" :class="turn">
+            <span class="turn-dot"></span>
+            <span class="turn-text">{{ colorName(turn) }}回合</span>
+          </div>
+          
+          <!-- 玩家顏色 -->
+          <div v-if="!isSpectator" class="info-block player-color" :class="myColor">
+            <span class="color-badge">{{ colorName(myColor) }}</span>
+            <span class="info-label">你是</span>
+          </div>
+          
+          <!-- AI思考中 -->
+          <div v-if="aiThinking" class="info-block ai-thinking">
+            <span class="thinking-icon">🤔</span>
+            <span>AI 思考中...</span>
+          </div>
+        </div>
         
-        <div style="margin-top: 12px; display: flex; align-items: center; gap: 10px;">
-          <label style="color: #94a3b8; font-size: 14px;">棋盤大小:</label>
-          <input type="range" v-model="boardSize" min="35" max="70" step="5" style="width: 120px;">
-          <span style="color: #fbbf24; font-size: 14px;">{{ boardSize }}</span>
+        <!-- 控制列 -->
+        <div class="control-row">
+          <div class="board-size-control">
+            <span class="control-label">📐 棋盤大小</span>
+            <input type="range" v-model="boardSize" min="35" max="70" step="5" class="size-slider">
+            <span class="size-value">{{ boardSize }}</span>
+          </div>
+          <button @click="leave" class="leave-btn">
+            <span>🚪</span> {{ t('leaveGame') }}
+          </button>
+        </div>
+        
+        <!-- 觀戰提示 -->
+        <div v-if="isSpectator" class="spectator-badge">
+          👁 你正在觀戰 - {{ currentRoomId }}
         </div>
       </div>
       

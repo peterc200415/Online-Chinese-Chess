@@ -77,3 +77,637 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+/* 遊戲 Header 樣式 */
+.game-header {
+  width: 100%;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.game-info-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.info-block {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.1);
+  font-size: 14px;
+}
+
+.info-icon {
+  font-size: 16px;
+}
+
+.info-label {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.room-id {
+  background: rgba(251, 191, 36, 0.2);
+  color: #fbbf24;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 13px;
+}
+
+/* 回合指示器 */
+.turn-indicator {
+  background: rgba(99, 102, 241, 0.2);
+}
+
+.turn-indicator.red .turn-dot {
+  background: #ef4444;
+}
+
+.turn-indicator.black .turn-dot {
+  background: #94a3b8;
+}
+
+.turn-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.turn-text {
+  font-weight: 600;
+}
+
+/* 玩家顏色 */
+.player-color.red {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.player-color.black {
+  background: rgba(148, 163, 184, 0.2);
+}
+
+.color-badge {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.player-color.red .color-badge {
+  color: #ef4444;
+}
+
+.player-color.black .color-badge {
+  color: #94a3b8;
+}
+
+/* AI 思考中 */
+.ai-thinking {
+  background: rgba(251, 191, 36, 0.2);
+  color: #fbbf24;
+  animation: glow 1.5s ease-in-out infinite;
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 5px rgba(251, 191, 36, 0.3); }
+  50% { box-shadow: 0 0 15px rgba(251, 191, 36, 0.6); }
+}
+
+.thinking-icon {
+  font-size: 16px;
+}
+
+/* 控制列 */
+.control-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.board-size-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.control-label {
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.size-slider {
+  width: 120px;
+  height: 6px;
+  -webkit-appearance: none;
+  background: linear-gradient(to right, #3b82f6, #8b5cf6);
+  border-radius: 3px;
+  outline: none;
+}
+
+.size-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+.size-value {
+  color: #fbbf24;
+  font-weight: 700;
+  font-size: 16px;
+  min-width: 24px;
+}
+
+.leave-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.leave-btn:hover {
+  background: rgba(239, 68, 68, 0.4);
+}
+
+/* 觀戰badge */
+.spectator-badge {
+  text-align: center;
+  padding: 8px;
+  background: rgba(99, 102, 241, 0.2);
+  color: #6366f1;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+/* ====== Lobby UI Styles ====== */
+.lobby-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.lobby-header {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.logo {
+  font-size: 72px;
+  margin-bottom: 8px;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.title {
+  font-size: 2.5em;
+  font-weight: 700;
+  background: linear-gradient(135deg, #ef4444, #fbbf24);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+}
+
+.subtitle {
+  color: #94a3b8;
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+/* Auth Card */
+.auth-card, .room-card {
+  width: 100%;
+  padding: 24px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.auth-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.auth-icon {
+  font-size: 24px;
+}
+
+.auth-header h2 {
+  margin: 0;
+  font-size: 1.25em;
+  color: #fff;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modern-input {
+  width: 280px;
+  padding: 12px 16px;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  color: #fff;
+  font-size: 14px;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.modern-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.modern-input::placeholder {
+  color: #64748b;
+}
+
+.auth-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.btn-primary, .btn-secondary, .btn-ai, .btn-purple {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.btn-secondary {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+.btn-secondary:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+.btn-purple {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: #fff;
+}
+
+.btn-purple:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+.btn-ai {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-ai:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.btn-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #fbbf24;
+  color: #000;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 20px 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.divider::before, .divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,0.1);
+}
+
+.divider span {
+  padding: 0 12px;
+}
+
+/* User Info */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  margin-bottom: 16px;
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.user-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.welcome-text {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.nickname {
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.logout-btn {
+  padding: 6px 12px;
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 6px;
+  color: #ef4444;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.logout-btn:hover {
+  background: rgba(239, 68, 68, 0.4);
+}
+
+/* Quick Actions */
+.quick-actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.action-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 16px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ai-btn {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.action-icon {
+  font-size: 28px;
+}
+
+.action-text {
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* Room Controls */
+.room-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.room-input {
+  text-align: center;
+  font-family: monospace;
+  letter-spacing: 2px;
+}
+
+.room-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+/* Room List Section */
+.room-list-section {
+  border-top: 1px solid rgba(255,255,255,0.1);
+  padding-top: 16px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #94a3b8;
+  margin: 0 0 12px 0;
+}
+
+.room-count {
+  background: rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+.room-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.room-item {
+  background: rgba(0,0,0,0.2);
+  border-radius: 10px;
+  padding: 12px;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.room-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.room-id {
+  font-family: monospace;
+  color: #fbbf24;
+  font-size: 13px;
+}
+
+.status-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.status-badge.waiting {
+  background: rgba(251, 191, 36, 0.2);
+  color: #fbbf24;
+}
+
+.status-badge.playing {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+}
+
+.room-players {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.player-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 15px;
+  font-size: 12px;
+}
+
+.player-chip.red {
+  color: #ef4444;
+}
+
+.player-chip.black {
+  color: #94a3b8;
+}
+
+.player-chip.empty {
+  color: #64748b;
+  font-style: italic;
+}
+
+.player-color-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.room-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.join-btn, .watch-btn {
+  flex: 1;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.join-btn {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+}
+
+.join-btn:hover {
+  background: rgba(16, 185, 129, 0.4);
+}
+
+.watch-btn {
+  background: rgba(99, 102, 241, 0.2);
+  color: #6366f1;
+}
+
+.watch-btn:hover {
+  background: rgba(99, 102, 241, 0.4);
+}
+
+.empty-rooms {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px;
+  color: #64748b;
+}
+
+.empty-icon {
+  font-size: 32px;
+  opacity: 0.5;
+}

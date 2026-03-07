@@ -27,16 +27,28 @@ app.get('/health', (req, res) => {
 
 // Proxy Ollama so frontend doesn't get strict CORS blocked
 app.post('/api/ai_move', async (req, res) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
     try {
         const olRes = await fetch('http://10.10.10.191:11435/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(req.body)
+            body: JSON.stringify(req.body),
+            signal: controller.signal
         });
+
         const data = await olRes.json();
+        if (!olRes.ok) {
+            return res.status(olRes.status).json(data);
+        }
+
         res.json(data);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        const status = err.name === 'AbortError' ? 504 : 500;
+        res.status(status).json({ error: err.name === 'AbortError' ? 'Ollama request timed out' : err.message });
+    } finally {
+        clearTimeout(timeoutId);
     }
 });
 

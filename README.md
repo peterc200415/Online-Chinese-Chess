@@ -1,161 +1,164 @@
-# ♟ Online Chinese Chess Platform (象棋對戰平台)
+# Online Chinese Chess Platform
 
-A web-based multiplayer Chinese Chess (Xiangqi) platform featuring **Real-Time PvP** matches, **Spectator Mode**, an enhanced **Minimax AI** engine, and a premium SVG-rendered game board with **Chinese/English i18n** support.
-
----
+A web-based Chinese Chess (Xiangqi) platform with real-time multiplayer, spectator mode, single-player AI, bilingual UI, and LAN/domain deployment support.
 
 ## Features
 
-### 🎮 Game Modes
-| Mode | Description |
-|------|-------------|
-| **Single Player vs AI** | Enhanced Minimax AI with transposition table, iterative deepening, and advanced evaluation |
-| **1v1 Real-Time Multiplayer** | Create rooms, share Room IDs, play against friends over WebSocket |
-| **👁 Spectator Mode** | Watch any ongoing game in real-time without participating |
+### Game Modes
+- Single Player vs AI
+- 1v1 real-time multiplayer over Socket.IO
+- Spectator mode with live move replay
 
-### 🧠 AI Engine (Enhanced)
-| Layer | Role | Details |
-|-------|------|---------|
-| **Minimax + α-β Pruning** | Core decision engine | 5-ply search with iterative deepening |
-| **Transposition Table** | Search optimization | Avoids re-computing identical positions |
-| **Quiescence Search** | Stability | 3-ply capture evaluation to prevent horizon effect |
-| **Enhanced Evaluation** | Positional awareness | King safety, piece coordination, central control, PST for all pieces |
-| **Piece-Square Tables** | Positional awareness | Pawns prefer crossing the river, Rooks prefer central files |
+### AI Engine
+- Minimax with alpha-beta pruning
+- Iterative deepening and transposition table caching
+- Quiescence search for tactical stability
+- Ollama-assisted move suggestion with timeout-safe fallback to Minimax
+- Frontend timeout handling so the "AI thinking" state always clears
 
-### ♟ Complete Xiangqi Rules
-- Per-piece move generation: 車(Rook), 馬(Knight), 炮(Cannon), 象(Bishop), 士(Advisor), 將/帥(King), 兵/卒(Pawn)
-- Blocking rules: Horse leg (卡馬腿), Elephant eye (塞象眼), Cannon platform (炮打隔山)
-- Palace restrictions, river crossing, Flying General (飛將)
-- **Check & Checkmate detection**: Cannot move into check, stalemate detection
-- Win detection on King capture with animated victory overlay
+### Gameplay
+- Full Xiangqi move rules
+- Check, checkmate, stalemate, and king-capture win detection
+- Room list, room join/create flow, and spectator sync
+- Adjustable board size and responsive SVG board UI
+- Chinese / English language toggle
 
-### 🌐 UI & UX
-- **i18n**: Full Chinese ↔ English toggle (floating button, instant switch)
-- **Room List**: Browse all active rooms with status, players, and spectator count
-- **Spectator Mode**: Watch games live with real-time board sync + move replay
-- **Victory Overlay**: Glassmorphism modal with 🏆 animation
-- **AI Thinking Indicator**: Animated glow effect during AI computation
-- **Board Size Slider**: Adjustable board size (35-70) in real-time
-- **Modern Lobby UI**: Floating logo animation, gradient buttons, player chips
-- **Responsive Design**: Mobile-first layout, auto-scaling SVG board
-- **SVG Board**: Wood-grain background, white grid, traditional piece names
+## Stack
 
----
-
-## Technology Stack
-
-| Component | Technology |
-|-----------|-----------|
-| Frontend | Vue 3 + Vite |
-| Backend API | Node.js + Express |
-| Real-Time | Socket.io |
-| Database | SQLite3 |
-| Auth | JWT + bcrypt |
-| Process Manager | PM2 |
-| AI | Enhanced Minimax with transposition table |
-
----
+- Frontend: Vue 3 + Vite
+- Backend: Node.js + Express
+- Realtime: Socket.IO
+- Database: SQLite3
+- Auth: JWT + bcrypt
+- AI: Ollama + Minimax fallback
+- Process management: `systemd --user`
+- Reverse proxy: Nginx Proxy Manager / Nginx
 
 ## Project Structure
 
-```
+```text
 chinese-chcess/
-├── server.js                  # Express + Socket.io backend
-├── database.js                # SQLite schema & connection
-├── routes/
-│   ├── auth.js               # Login & register API
-│   └── games.js              # Game history API
-├── sockets/
-│   └── roomHandler.js        # Room management + spectator logic
-├── chess-server.service       # systemd service file
-├── chess-frontend.service    # systemd service file
-└── frontend/
-    ├── vite.config.js        # Dev server proxy (/api → 3000)
-    └── src/
-        ├── App.vue            # Main app (lobby, rooms, spectator, i18n)
-        ├── style.css         # Global styles + animations
-        ├── components/
-        │   └── ChessBoard.vue # SVG board renderer with dynamic size
-        └── engine/
-            ├── GameLogic.js   # Full Xiangqi rules & evaluation
-            ├── MinimaxAI.js   # Enhanced Minimax + TT + quiescence
-            └── OllamaAI.js    # Hybrid Ollama + Minimax bridge
+??? server.js
+??? database.js
+??? chess-server.service
+??? chess-frontend.service
+??? routes/
+??? sockets/
+??? frontend/
+    ??? src/
+    ?   ??? App.vue
+    ?   ??? components/ChessBoard.vue
+    ?   ??? engine/
+    ?       ??? GameLogic.js
+    ?       ??? MinimaxAI.js
+    ?       ??? OllamaAI.js
+    ??? vite.config.js
 ```
 
----
-
-## Getting Started
+## Local Development
 
 ### Prerequisites
-- [Node.js](https://nodejs.org/) (v18+)
-- *(Optional)* [PM2](https://pm2.keymetrics.io/) for production process management
+- Node.js 18+
+- npm
+- Optional: Ollama-compatible API reachable by the backend
 
-### Development Mode
+### Backend
 
-#### 1. Start Backend
 ```bash
 npm install
 node server.js
 ```
-Backend runs on `http://localhost:3000`.
 
-#### 2. Start Frontend
+Backend listens on `http://localhost:3000`.
+
+### Frontend
+
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-Frontend runs on `http://localhost:5173`. API requests are auto-proxied to port 3000.
 
-### Production Mode (Recommended)
+Frontend listens on `http://localhost:5173`.
 
-#### 1. Build Frontend
+In development, `vite.config.js` proxies `/api` and `/socket.io` to port `3000`.
+
+## Production Deployment
+
+### Backend and frontend services
+
+This project is deployed in production with user-level systemd services.
+
+Backend service:
+
 ```bash
-cd frontend
-npm run build
-npm run preview -- --host 0.0.0.0 --port 5173
+systemctl --user status chess-server.service
+journalctl --user -u chess-server.service -n 100 --no-pager
 ```
 
-#### 2. Run with PM2
+Frontend service:
+
 ```bash
-# Install PM2
-npm install -g pm2
-
-# Start backend
-pm2 start server.js --name chinese-chess-api
-
-# Start frontend (after building)
-pm2 start npm --name chinese-chess-frontend -- run preview --prefix frontend -- --host 0.0.0.0 --port 5173
-
-# Save process list for auto-restart
-pm2 save
+systemctl --user status chess-frontend.service
+journalctl --user -u chess-frontend.service -n 100 --no-pager
 ```
 
-### 3. LAN / Domain Access
-- **LAN**: Other devices connect via `http://<your-ip>:5173`
-- **Domain**: Configure nginx to reverse proxy to port 5173
+Service behavior:
+- `chess-server.service` runs Node on port `3000`
+- `chess-frontend.service` builds the Vite app and runs `vite preview` on port `5173`
+- both services auto-restart on failure
 
----
+### Reverse proxy requirements
+
+When using a domain behind Nginx or Nginx Proxy Manager:
+- `/` should proxy to `http://<app-host>:5173`
+- `/api/` should proxy to `http://<app-host>:3000`
+- `/socket.io/` should proxy to `http://<app-host>:3000`
+- WebSocket upgrade headers must be enabled for `/socket.io/`
+
+If you proxy only `/` to port `5173`, the homepage may load while login, history, or multiplayer features fail.
+
+## AI Flow
+
+Single-player AI works like this:
+1. The frontend asks the backend to query Ollama.
+2. The backend proxies the request to the Ollama host.
+3. If Ollama times out or returns an unusable move, the frontend falls back to Minimax.
+
+Current safeguards:
+- backend Ollama proxy timeout: 10 seconds
+- frontend Ollama request timeout: 8 seconds
+- fallback to `getBestMoveQuick()` if Ollama is unavailable or returns an illegal move
 
 ## Multiplayer Guide
-1. Open the app in **two browser windows**
-2. **Register & Login** in both
-3. Window A: Click **New Room** → enters waiting room → copy Room ID
-4. Window B: Paste Room ID → click **Join Room**
-5. Game starts automatically!
+
+1. Open the app in two browser windows.
+2. Register and login in both.
+3. In window A, create a new room.
+4. In window B, join using the room ID.
+5. The game starts automatically when both players are present.
 
 ## Spectator Guide
-1. **Login** and check the room list in the lobby
-2. Click **👁 Watch** on any room card
-3. The current board state is replayed instantly — watch moves in real-time!
 
----
+1. Login.
+2. Open the room list in the lobby.
+3. Click `Watch` on an active room.
+4. The current board state is replayed and then updated live.
 
-## Board Customization
-- Use the **board size slider** in game view to adjust the board size (35-70)
-- Changes apply in real-time
+## Operations Checklist
 
----
+If the site stops working, check in this order:
+
+```bash
+systemctl --user status chess-server.service chess-frontend.service
+ss -ltnp | grep -E ':3000|:5173'
+curl http://127.0.0.1:3000/health
+journalctl --user -u chess-server.service -n 100 --no-pager
+journalctl --user -u chess-frontend.service -n 100 --no-pager
+```
+
+If the homepage works but API or multiplayer does not, inspect the reverse proxy rules for `/api/` and `/socket.io/`.
 
 ## License
+
 MIT

@@ -1,14 +1,15 @@
 [Unit]
-Description=Chinese Chess Server
+Description=Chinese Chess Backend
 After=network.target
 
 [Service]
 Type=simple
-User=peterc20
 WorkingDirectory=/home/peterc20/opencode/chinese-chcess
-ExecStart=/home/peterc20/.nvm/versions/node/v24.13.1/bin/node server.js
+Environment=NODE_ENV=production
+Environment=PORT=3000
+ExecStart=/home/peterc20/.nvm/versions/node/v24.13.1/bin/node /home/peterc20/opencode/chinese-chcess/server.js
 Restart=always
-RestartSec=10
+RestartSec=5
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target

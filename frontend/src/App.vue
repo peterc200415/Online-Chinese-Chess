@@ -499,32 +499,36 @@ async function handleMove(move) {
     aiThinking.value = true;
     setTimeout(async () => {
       const aiColor = myColor.value === 'red' ? 'black' : 'red';
-      const best = await getOllamaMove(board.value, aiColor);
-      aiThinking.value = false;
-      if (best) {
-        const aiTarget = board.value[best.end[0]][best.end[1]];
-        board.value = applyMove(board.value, best);
-        if (aiTarget && aiTarget[1] === 'K') {
-          winner.value = aiColor;
-          winMessage.value = t('aiWinCapture')(colorName(aiColor));
-          return;
+
+      try {
+        const best = await getOllamaMove(board.value, aiColor);
+        if (best) {
+          const aiTarget = board.value[best.end[0]][best.end[1]];
+          board.value = applyMove(board.value, best);
+          if (aiTarget && aiTarget[1] === 'K') {
+            winner.value = aiColor;
+            winMessage.value = t('aiWinCapture')(colorName(aiColor));
+            return;
+          }
+
+          const playerStatus = getGameStatus(board.value, myColor.value);
+          if (playerStatus === 'checkmate') {
+            winner.value = aiColor;
+            winMessage.value = t('aiCheckmateWin');
+            return;
+          } else if (playerStatus === 'stalemate') {
+            winner.value = 'draw';
+            winMessage.value = t('stalemate');
+            return;
+          }
+
+          turn.value = myColor.value;
+        } else {
+          winner.value = myColor.value;
+          winMessage.value = t('aiNoMoves');
         }
-        
-        const playerStatus = getGameStatus(board.value, myColor.value);
-        if (playerStatus === 'checkmate') {
-          winner.value = aiColor;
-          winMessage.value = t('aiCheckmateWin');
-          return;
-        } else if (playerStatus === 'stalemate') {
-          winner.value = 'draw';
-          winMessage.value = t('stalemate');
-          return;
-        }
-        
-        turn.value = myColor.value;
-      } else {
-        winner.value = myColor.value;
-        winMessage.value = t('aiNoMoves');
+      } finally {
+        aiThinking.value = false;
       }
     }, 100);
   } else {

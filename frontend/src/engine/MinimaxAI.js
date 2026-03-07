@@ -175,13 +175,17 @@ function evaluatePieceCoordination(board, pieces, color) {
         
         if (type === 'N') {
             let mobility = 0;
-            const horseMoves = [[-2,-1],[-2,1],[2,-1],[2,1],[-1,-2],[-1,2],[1,-2],[1,2]];
-            for (const [dr, dc] of horseMoves) {
+            const horseMoves = [
+                [-2, -1, -1, 0], [-2, 1, -1, 0],
+                [2, -1, 1, 0], [2, 1, 1, 0],
+                [-1, -2, 0, -1], [-1, 2, 0, 1],
+                [1, -2, 0, -1], [1, 2, 0, 1]
+            ];
+            for (const [dr, dc, lr, lc] of horseMoves) {
                 const nr = r + dr, nc = c + dc;
-                if (nr >= 0 && nr < 10 && nc >= 0 && nc < 9) {
-                    if (board[r + dr/2][c + dc/2] === '') {
-                        mobility++;
-                    }
+                const legR = r + lr, legC = c + lc;
+                if (nr >= 0 && nr < 10 && nc >= 0 && nc < 9 && board[legR][legC] === '') {
+                    mobility++;
                 }
             }
             coord += mobility * 3;

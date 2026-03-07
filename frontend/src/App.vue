@@ -186,7 +186,7 @@
       <div v-if="winner" class="victory-overlay" @click="closeVictory">
         <div class="victory-modal">
           <div class="victory-icon">🏆</div>
-          <h1 class="victory-title">{{ winner === myColor ? t('victory') : t('defeat') }}</h1>
+          <h1 class="victory-title">{{ winner === 'draw' ? t('stalemate') : (winner === myColor ? t('victory') : t('defeat')) }}</h1>
           <p class="victory-sub">{{ winMessage }}</p>
           <button @click="closeVictory" class="victory-btn">{{ t('backToLobby') }}</button>
         </div>
@@ -341,6 +341,32 @@ function resetBoard() {
   turn.value = 'red';
 }
 
+function applyServerState(state) {
+  if (state.board) board.value = state.board.map(row => [...row]);
+  if (state.turn) turn.value = state.turn;
+}
+
+function resetGameState() {
+  winner.value = null;
+  winMessage.value = '';
+  aiThinking.value = false;
+}
+
+function showMultiplayerResult(result, winnerColor) {
+  winner.value = winnerColor;
+  if (result === 'stalemate') {
+    winMessage.value = t('stalemate');
+    return;
+  }
+  if (result === 'checkmate') {
+    winMessage.value = winnerColor === myColor.value ? t('checkmateWin') : t('aiCheckmateWin');
+    return;
+  }
+  winMessage.value = winnerColor === myColor.value
+    ? t('winCapture')(colorName(winnerColor))
+    : t('aiWinCapture')(colorName(winnerColor));
+}
+
 async function login() {
   try {
     const res = await fetch(`${API}/api/auth/login`, {
@@ -378,28 +404,35 @@ function initSocket() {
   });
 
   socket.on('game_start', (data) => {
-    resetBoard();
+    resetGameState();
+    isSinglePlayer.value = false;
+    isSpectator.value = false;
+    applyServerState(data);
     const me = data.players.find(p => p.id === user.value.id);
     if (me) myColor.value = me.color;
     view.value = 'game';
   });
   
-  socket.on('move_made', (move) => {
-    board.value = applyMove(board.value, move);
-    turn.value = turn.value === 'red' ? 'black' : 'red';
+  socket.on('move_made', (data) => {
+    applyServerState(data);
   });
   
-  socket.on('game_saved', () => {
-    alert(t('gameSaved'));
-    view.value = 'lobby';
+  socket.on('game_over', (data) => {
+    applyServerState(data);
+    showMultiplayerResult(data.result, data.winner);
   });
 
   socket.on('room_update', (room) => {
     console.log('Room update:', room);
   });
 
+  socket.on('room_error', (message) => {
+    alert(message);
+  });
+
   socket.on('player_disconnected', () => {
-    alert(t('gameSaved'));
+    resetGameState();
+    alert('Player disconnected');
     view.value = 'lobby';
   });
 
@@ -408,14 +441,11 @@ function initSocket() {
   });
 
   socket.on('watch_start', (data) => {
-    resetBoard();
-    // Replay all moves to get current board state
-    for (const move of data.moves) {
-      board.value = applyMove(board.value, move);
-    }
-    turn.value = data.moves.length % 2 === 0 ? 'red' : 'black';
+    resetGameState();
+    applyServerState(data);
+    isSinglePlayer.value = false;
     isSpectator.value = true;
-    myColor.value = 'red'; // doesn't matter for spectator, just for display
+    myColor.value = 'red';
     view.value = 'game';
   });
 }
@@ -460,7 +490,9 @@ function watchRoom(roomId) {
 }
 
 function startSP() {
+  resetGameState();
   isSinglePlayer.value = true;
+  isSpectator.value = false;
   currentRoomId.value = '';
   myColor.value = 'red';
   resetBoard();
